@@ -1,0 +1,35 @@
+name: Port Test
+# This workflow is triggered on pushes to the repository.
+on: [push]
+
+jobs:
+  port-test:
+    name: Outputs Test
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install Dependencies
+        run: yarn install
+
+      - name: Setup ngrok
+        run: |
+          wget https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-darwin-amd64.zip
+          unzip ./ngrok-stable-darwin-amd64.zip
+          ./ngrok --version
+
+      - name: Run ngrok
+        run: ./ngrok http 4000 > output.log 2>&1 &
+
+      - name: Log ngrok
+        run: sleep 5; cat output.log
+
+      - name: Env ngrok
+        run: |
+          NGROK_URL=$(curl -s localhost:4040/api/tunnels/command_line | jq --raw-output .public_url)
+          echo "::set-env name=NGROK_URL::$NGROK_URL"
+          echo $NGROK_URL
+
+      - name: Run service
+        run: node index.js
