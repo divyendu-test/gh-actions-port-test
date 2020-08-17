@@ -13,23 +13,23 @@ jobs:
       - name: Install Dependencies
         run: yarn install
 
-      - name: Setup ngrok
+      - name: Setup ngrok # Download ngrok
         run: |
           wget https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-darwin-amd64.zip
           unzip ./ngrok-stable-darwin-amd64.zip
           ./ngrok --version
 
-      - name: Run ngrok
+      - name: Run ngrok # Run in background to continue to next step
         run: ./ngrok http 4000 > output.log 2>&1 &
 
-      - name: Log ngrok
-        run: sleep 5; cat output.log
+      - name: Wait for ngrok # Wait for ngrok to setup
+        run: sleep 5;
 
-      - name: Env ngrok
+      - name: Env ngrok # Extract its URL
         run: |
           NGROK_URL=$(curl -s localhost:4040/api/tunnels/command_line | jq --raw-output .public_url)
           echo "::set-env name=NGROK_URL::$NGROK_URL"
           echo $NGROK_URL
 
-      - name: Run service
+      - name: Run service # Run express server, it kills itself in 60s, letting the action end
         run: node index.js
